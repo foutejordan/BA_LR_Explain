@@ -67,6 +67,7 @@ def cllr(tar_llrs, nontar_llrs):
     return c
 
 
+
 def min_cllr(tar_llrs, nontar_llrs, monotonicity_epsilon=1e-6, compute_eer=False):
     if compute_eer:
         [tar, non, eer] = optimal_llr(tar_llrs, nontar_llrs, laplace=True, monotonicity_epsilon=monotonicity_epsilon,
