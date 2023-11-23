@@ -1,3 +1,4 @@
+
 # BA-LR: Towards an interpretable and explainable approach for speaker recognition
 This is the implementation of BA-LR approach for speaker recognition. This approach is decomposed of three steps: 1) the extraction of binary-attribute-based speech representations, 2) the estimation of the attribute behavioral parameters and LR estimation, 3) Explainability and interpretability of the nature of the attributes. 
 Below two references of the works published concerning this approach where the first one provides a presentation of the approach ,mainly step 1 and 2,and the second reference presents a methodology that explains the nature of each attribute contributing to the LR estimation for speaker verification. 
@@ -144,6 +145,3 @@ interpretable speaker recognition},
   year={2023}
 }
 ```
-
-
-
