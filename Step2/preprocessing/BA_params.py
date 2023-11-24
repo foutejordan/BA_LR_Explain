@@ -31,7 +31,7 @@ def number_utterances(utt):
     return speaker_dict, loc_list
 
 
-def todelete(xvectors):
+def todelete1(xvectors):
     """
     This function deletes zero columns for all rows in array "xvectors"
     :param xvectors: array of binary xvectors
@@ -158,6 +158,11 @@ def utterance_dictionary(binary_vectors, utterances, BA):
     return utt
 
 
+
+#
+# it calculates the typicality and dropout for each BA wich is the number of speakers having BA active in their utterances
+# the dropout is the average of the dropout per speaker, dropout means the number of BA inactive in the utterances of a speaker
+# the typicality is the number of couples having BA active in their utterances
 def typicality_and_dropout(profil, couples, utt_spk, BA, vectors, typ_path, dout_path):
     """
     This function calculate the typicality and Dropout for all BAs
@@ -272,9 +277,9 @@ if __name__ == "__main__":
     # Arguments
     # env.logging_config(env.PATH_LOGS + "/logFile")
     parse = argparse.ArgumentParser()
-    parse.add_argument("--path", default="/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/output_transformed.txt", type=str)
-    parse.add_argument("--typ_path", default="data/typ.txt", type=str)
-    parse.add_argument("--dout_path", default="data/dout.txt", type=str)
+    parse.add_argument("--path", default="/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/test_transformed.txt", type=str)
+    parse.add_argument("--typ_path", default="/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/typ_test.txt", type=str)
+    parse.add_argument("--dout_path", default="/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/dout_test.txt", type=str)
     args = parse.parse_args()
     logging.info("read xvectors")
     utterances, binary = readVectors_test(args.path)
@@ -283,7 +288,8 @@ if __name__ == "__main__":
     utt_per_spk, loc_list = number_utterances(utterances)
     logging.info("delete zero columns...")
 
-    binary_vectors, idx = todelete(binary)
+    binary_vectors, idx = todelete1(binary)
+
     logging.info(f"number of deleted columns: {len(idx)}")
     BA = ['BA' + str(i) for i in range(binary.shape[1]) if np.array([i]) not in idx]
     # liberate memory
