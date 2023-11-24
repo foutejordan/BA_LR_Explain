@@ -3,12 +3,12 @@
 # ==============================================================================
 
 def load_trials():
-    with open("data/target_trials.txt","r") as f:
+    with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/data/target_trials.txt","r") as f:
         text=f.readlines()
         target=[]
         for couple in text:
             target.append(eval(couple.strip()))
-    with open("data/non_trials.txt","r") as f:
+    with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/data/non_trials.txt","r") as f:
         text=f.readlines()
         non=[]
         for couple in text:

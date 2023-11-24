@@ -14,13 +14,15 @@ def LLR(pair,utt,dropout,typ_va,prob_dropin):
     LLR= []
     for (u1, u2) in pair:
         lr = 1
-        for i in utt[u1]:
-            if utt[u1][i] == 1 and utt[u2][i] == 1:
-                lr *= LR_11(typ_va[i], dropout[i], prob_dropin)
-            elif utt[u1][i] != utt[u2][i]:
-                lr *= (LR_01(typ_va[i], prob_dropin) + LR_10(typ_va[i], dropout[i])) / 2
-            else:
-                lr *= LR_00(typ_va[i], dropout[i], prob_dropin)
+        if u1 in utt and u2 in utt:
+            for i in utt[u1]:
+                if i in utt[u2] and i in typ_va and i in dropout:
+                    if utt[u1][i] == 1 and utt[u2][i] == 1:
+                        lr *= LR_11(typ_va[i], dropout[i], prob_dropin)
+                    elif utt[u1][i] != utt[u2][i]:
+                        lr *= (LR_01(typ_va[i], prob_dropin) + LR_10(typ_va[i], dropout[i])) / 2
+                    else:
+                        lr *= LR_00(typ_va[i], dropout[i], prob_dropin)
         LLR.append(np.log(lr))
     return LLR
 def LR_framework(dropout,typ_va,utt,target,non,lprob_dropin):
@@ -43,7 +45,7 @@ def LR_framework(dropout,typ_va,utt,target,non,lprob_dropin):
         plt.title(f"relu test C={prob_dropin},Cllr (min/act):({cllr_mini}, {cllr_act}),eer= {eer} ")
         plt.xlabel("LLR scores")
         plt.legend()
-        plt.savefig("data/"+f"{prob_dropin}"+".png")
+        plt.savefig("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/data/"+f"{prob_dropin}"+".png")
     return LLR_target,LLR_non,list_eer,list_cllr_min,list_cllr_act,list_Din
 def partial_lr_analysis(classe, VA_test,utt,typ_va, dropout, prob_dropin):
     utt_llr={}

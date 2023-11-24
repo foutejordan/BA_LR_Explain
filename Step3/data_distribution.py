@@ -18,9 +18,9 @@ def partition_gender_plot(dict_ba,ba,chaine):
     for bar1,bar2 in zip(plots1.patches,plots2.patches):
         plots1.annotate(format(bar1.get_height(), '.2f'),(bar1.get_x() + bar1.get_width() / 2,bar1.get_height()), ha='center', va='center', size=6, xytext=(0, 5),textcoords='offset points')
         plots2.annotate(format(bar2.get_height(), '.2f'),(bar2.get_x() + bar2.get_width() / 2,bar2.get_height()), ha='center', va='center',size=6, xytext=(0, 5),textcoords='offset points')
-    stats_ba.to_csv(f"data/BA/parition_gender_{ba}_{chaine}.csv")
+    stats_ba.to_csv(f"/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/data/BA/parition_gender_{ba}_{chaine}.csv")
     plt.tight_layout()
-    plt.savefig(f"data/BA/partition_gender_{ba}_{chaine}.png")
+    plt.savefig(f"/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/data/BA/partition_gender_{ba}_{chaine}.png")
     plt.show()
 
 

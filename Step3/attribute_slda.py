@@ -85,13 +85,13 @@ def variables_selection(ba):
     plt.xlabel("Number of variables")
     plt.ylabel("Lambda values")
     plt.show()
-    plt.savefig(f"data/BA/var_selection_{ba}.png")
+    plt.savefig(f"/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/data/BA/var_selection_{ba}.png")
     return lda_dict,X,y,ba0,ba1
 
 
 BA=[f"BA{i}" for i in range(256)]
 for ba in BA:
-    if os.path.isfile(f"data/BA/{ba}_0.csv"):
+    if os.path.isfile(f"/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/data/BA/{ba}_0.csv"):
         logging.info(f"====={ba}=====")
         lda_dict,X,y,ba0,ba1=variables_selection(ba)
         selected_variables = []
