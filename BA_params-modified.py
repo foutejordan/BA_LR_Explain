@@ -36,6 +36,8 @@ import shap
 import pickle
 
 
+utt_correspondance = {}
+
 def number_utterances(utt):
     '''
     This function calculates for each speaker the number of utterances
@@ -44,12 +46,19 @@ def number_utterances(utt):
     '''
     speaker_dict = {}
     loc_list = []
+    
+    x = 0
+    
     for u in utt:
         first_element_after_split = u.split("-")[0]
         if speaker_dict.get(first_element_after_split) is not None:
             speaker_dict[first_element_after_split] += 1
         else:
             speaker_dict[first_element_after_split] = 1
+            
+        x+=1
+            
+        utt_correspondance[u] = "utt"+str(x)
         loc_list.append(first_element_after_split)
         
     print("speaker_dict", speaker_dict)
@@ -321,6 +330,7 @@ if __name__ == "__main__":
     args = parse.parse_args()
     logging.info("read xvectors")
     utterances, binary = readVectors_test(args.path)
+    
     logging.info("finish reading xvectors")
     logging.info("xvectors array ready")
     utt_per_spk, loc_list = number_utterances(utterances)
@@ -342,7 +352,7 @@ if __name__ == "__main__":
     # speakers couples
     logging.info("computing combinations...")
     couples = list(itertools.combinations(utt_per_spk.keys(), 2))
-    print(couples)
+    #print(couples)
     typicality_and_dropout(profil, couples, utt_spk, BA, binary_vectors, args.typ_path, args.dout_path)
 
     #BA = ['BA' + str(i) for i in range(binary.shape[1])]
@@ -358,10 +368,31 @@ if __name__ == "__main__":
     for (idx,row) in df.iterrows():
         utt[f"utt{idx}"]=dict(row)
         
+    # print('UTT CORRESPONDANCE')
+    # print(utt_correspondance)
+        
+    with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/trials_vox1.txt", "r") as file:
+        lines = file.readlines()
+        
+    with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/target.txt", "w+") as target:
+        with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/non.txt", "w+") as non:
+        
+            for line in lines:
+                first_utt = utt_correspondance[line.split()[1]]
+                second_utt = utt_correspondance[line.split()[2]]
+                
+                if line.split()[0] == '1':
+                    target.write("('"+first_utt+"', '"+second_utt+"')\n")
+                elif line.split()[0] == '0':
+                    non.write("('"+first_utt+"', '"+second_utt+"')\n")
+                else:
+                    print("PROBLEM!")
+                    
+        
     non,tar= load_trials()
-    print("dout : ", dout)
+    #print("dout : ", dout)
     LLR_target,LLR_non,list_eer,list_cllr_min,list_cllr_act,list_Din=LR_framework(dout,typ,utt,tar,non,[0.12])
-    
+    plt.show()
     # Assuming you have a specific couple
     couple_to_print = ('utt1', 'utt2')
 
@@ -376,4 +407,3 @@ if __name__ == "__main__":
     print(f"LLR target for couple {couple_to_print}: {llr_target_for_couple}")
     print(f"LLR non for couple {couple_to_print}: {llr_non_for_couple}")
     
-    #plt.show()
