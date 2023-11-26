@@ -324,9 +324,9 @@ if __name__ == "__main__":
     # Arguments
     # env.logging_config(env.PATH_LOGS + "/logFile")
     parse = argparse.ArgumentParser()
-    parse.add_argument("--path", default="/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/test_transformed.txt", type=str)
-    parse.add_argument("--typ_path", default="/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/typ_test.txt", type=str)
-    parse.add_argument("--dout_path", default="/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/dout_test.txt", type=str)
+    parse.add_argument("--path", default="./vox1-transformed.txt", type=str)
+    parse.add_argument("--typ_path", default="./data/typ_j.txt", type=str)
+    parse.add_argument("--dout_path", default="./data/dout_j.txt", type=str)
     args = parse.parse_args()
     logging.info("read xvectors")
     utterances, binary = readVectors_test(args.path)
@@ -373,11 +373,11 @@ if __name__ == "__main__":
     
     ## Write target and non files 
         
-    with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/trials_vox1.txt", "r") as file:
+    with open("./trials_vox1.txt", "r") as file:
         lines = file.readlines()
         
-    with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/target.txt", "w+") as target:
-        with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/non.txt", "w+") as non:
+    with open("./target.txt", "w+") as target:
+        with open("./non.txt", "w+") as non:
         
             for line in lines:
                 first_utt = utt_correspondance[line.split()[1]]
@@ -406,6 +406,6 @@ if __name__ == "__main__":
     llr_non_for_couple = LLR_non[couple_index]
 
     # Print the LLR scores
-    #print(f"LLR target for couple {couple_to_print}: {llr_target_for_couple}")
+    print(f"LLR target for couple {couple_to_print}: {llr_target_for_couple}")
     print(f"LLR non for couple {couple_to_print}: {llr_non_for_couple}")
     

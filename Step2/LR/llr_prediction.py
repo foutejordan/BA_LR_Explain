@@ -45,7 +45,7 @@ def LR_framework(dropout,typ_va,utt,target,non,lprob_dropin):
         plt.title(f"relu test C={prob_dropin},Cllr (min/act):({cllr_mini}, {cllr_act}),eer= {eer} ")
         plt.xlabel("LLR scores")
         plt.legend()
-        plt.savefig("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/data/"+f"{prob_dropin}"+".png")
+        plt.savefig("./data/"+f"{prob_dropin}"+".png")
     return LLR_target,LLR_non,list_eer,list_cllr_min,list_cllr_act,list_Din
 def partial_lr_analysis(classe, VA_test,utt,typ_va, dropout, prob_dropin):
     utt_llr={}
