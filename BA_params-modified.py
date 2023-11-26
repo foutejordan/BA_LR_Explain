@@ -370,6 +370,8 @@ if __name__ == "__main__":
         
     # print('UTT CORRESPONDANCE')
     # print(utt_correspondance)
+    
+    ## Write target and non files 
         
     with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/trials_vox1.txt", "r") as file:
         lines = file.readlines()
@@ -392,9 +394,9 @@ if __name__ == "__main__":
     non,tar= load_trials()
     #print("dout : ", dout)
     LLR_target,LLR_non,list_eer,list_cllr_min,list_cllr_act,list_Din=LR_framework(dout,typ,utt,tar,non,[0.12])
-    plt.show()
+    #plt.show()
     # Assuming you have a specific couple
-    couple_to_print = ('utt1', 'utt2')
+    couple_to_print = ('utt131', 'utt123')
 
     # Find the index of the couple in the 'tar' list
     couple_index = tar.index(couple_to_print)
@@ -404,6 +406,6 @@ if __name__ == "__main__":
     llr_non_for_couple = LLR_non[couple_index]
 
     # Print the LLR scores
-    print(f"LLR target for couple {couple_to_print}: {llr_target_for_couple}")
+    #print(f"LLR target for couple {couple_to_print}: {llr_target_for_couple}")
     print(f"LLR non for couple {couple_to_print}: {llr_non_for_couple}")
     
