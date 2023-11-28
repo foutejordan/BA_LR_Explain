@@ -12,6 +12,7 @@ import argparse
 import logging
 
 import warnings
+
 warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
@@ -35,8 +36,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import shap
 import pickle
 
-
 utt_correspondance = {}
+
 
 def number_utterances(utt):
     '''
@@ -46,21 +47,21 @@ def number_utterances(utt):
     '''
     speaker_dict = {}
     loc_list = []
-    
+
     x = 0
-    
+
     for u in utt:
         first_element_after_split = u.split("-")[0]
         if speaker_dict.get(first_element_after_split) is not None:
             speaker_dict[first_element_after_split] += 1
         else:
             speaker_dict[first_element_after_split] = 1
-            
-        x+=1
-            
-        utt_correspondance[u] = "utt"+str(x)
+
+        x += 1
+
+        utt_correspondance[u] = "utt" + str(x)
         loc_list.append(first_element_after_split)
-        
+
     print("speaker_dict", speaker_dict)
     print("loc_list", loc_list)
     return speaker_dict, loc_list
@@ -130,7 +131,7 @@ def compute_typicality(b, couples, profil):
             nb += 1
     # stat_BA[b] = nb
     typ_BA = nb / len(couples)
-    #print(f"b: {b}, nb: {nb}, len(couples): {len(couples)}, typ_BA: {typ_BA}")
+    # print(f"b: {b}, nb: {nb}, len(couples): {len(couples)}, typ_BA: {typ_BA}")
     return typ_BA, nb
 
 
@@ -163,7 +164,7 @@ def compute_dropout(b, profil, utt_spk, matrix_utterances, index_of_b):
         BA_spk += nb_BA / len(utt_spk[spk])
         dropout_per_spk[spk] = nb_BA / len(utt_spk[spk])
 
-    #print(spk_has_b_atleast_once)
+    # print(spk_has_b_atleast_once)
     out = BA_spk / spk_has_b_atleast_once
     return out, nb_BA_spk_b, dropout_per_spk, spk_has_b_atleast_once
 
@@ -195,7 +196,6 @@ def utterance_dictionary(binary_vectors, utterances, BA):
     for (u, row) in zip(utterances, binary_vectors):
         utt[u] = {b: i for i, b in zip(row, BA)}
     return utt
-
 
 
 #
@@ -255,7 +255,7 @@ def typicality_and_dropout(profil, couples, utt_spk, BA, vectors, typ_path, dout
 
         file2.close()
     file1.close()
-    #print(typicalities)
+    # print(typicalities)
     return nb_couples_b, typicalities, dropouts, nb_spk_has_BA, nb_utt_spk_b, dropout_spk
 
 
@@ -265,6 +265,7 @@ def stringToList(string):
 
 
 import re
+
 
 def readVectors_test(filePath):
     vectors = []
@@ -320,6 +321,69 @@ def readVectors(filePath):
     return utt, np.array(vectors)
 
 
+def find_id_by_utt_in_utt_correspondance(utt):
+    for key, value in utt_correspondance.items():
+        if value == utt:
+            return key
+
+
+# def predict if 2 utterances utt1 and utt2 are from the same speaker with the LLR score, return label and probability
+def predict(utt1, utt2):
+    couple = (utt1, utt2)
+    couple_index = tar.index(couple)
+    llr_target_for_couple = LLR_target[couple_index]
+    llr_non_for_couple = LLR_non[couple_index]
+    # print("llr_target_for_couple", llr_target_for_couple)
+    # print("llr_non_for_couple", llr_non_for_couple)
+    if llr_target_for_couple > llr_non_for_couple:
+        return 1
+    else:
+        return 0
+
+
+import random
+
+
+def do_edit(vector):
+    indices_to_modify = random.sample(range(0, len(vector)), 3)
+    for i in indices_to_modify:
+        if vector[i] == 0:
+            vector[i] = 1
+        else:
+            vector[i] = 0
+    return vector
+
+
+def generate_counterfactual(utt, couple, dout, typ, tar, non):
+    llr_target_for_couple = 100000
+    llr_non_for_couple = 0
+    while llr_target_for_couple > llr_non_for_couple:
+        vector1 = np.array(list(utt[couple[0]].values()))
+        vector2 = np.array(list(utt[couple[1]].values()))
+
+        new_vector1 = do_edit(vector1)
+        new_vector2 = do_edit(vector2)
+
+        for key, value in utt.items():
+            test = np.array(list(value.values()))
+            if key == couple[0]:
+                print(utt[key])
+                utt[key] = dict(zip(utt[key].keys(), new_vector1))
+                print(utt[key])
+            if key == couple[1]:
+                utt[key] = dict(zip(utt[key].keys(), new_vector2))
+        LLR_target, LLR_non, list_eer, list_cllr_min, list_cllr_act, list_Din = LR_framework(dout, typ, utt, tar, non,
+                                                                                             [0.12])
+        couple_index = tar.index(couple)
+        llr_target_for_couple = LLR_target[couple_index]
+        llr_non_for_couple = LLR_non[couple_index]
+
+        print("llr_target_for_couple_counterfactual", llr_target_for_couple)
+        print("llr_non_for_couple_counterfactual", llr_non_for_couple)
+
+        print("new predict", predict(couple[0], couple[1]))
+
+
 if __name__ == "__main__":
     # Arguments
     # env.logging_config(env.PATH_LOGS + "/logFile")
@@ -330,7 +394,7 @@ if __name__ == "__main__":
     args = parse.parse_args()
     logging.info("read xvectors")
     utterances, binary = readVectors_test(args.path)
-    
+
     logging.info("finish reading xvectors")
     logging.info("xvectors array ready")
     utt_per_spk, loc_list = number_utterances(utterances)
@@ -352,60 +416,80 @@ if __name__ == "__main__":
     # speakers couples
     logging.info("computing combinations...")
     couples = list(itertools.combinations(utt_per_spk.keys(), 2))
-    #print(couples)
+    # print(couples)
     typicality_and_dropout(profil, couples, utt_spk, BA, binary_vectors, args.typ_path, args.dout_path)
 
-    #BA = ['BA' + str(i) for i in range(binary.shape[1])]
+    # BA = ['BA' + str(i) for i in range(binary.shape[1])]
     df = pd.DataFrame(binary_vectors, columns=BA)
-    df=todelete(df,BA)
+    df = todelete(df, BA)
     df
 
-    typ,dout=load_filter_soft(args.typ_path, args.dout_path)
-    df=df[list(typ.keys())]
-    BA_test=list(typ.keys())
+    typ, dout = load_filter_soft(args.typ_path, args.dout_path)
+    df = df[list(typ.keys())]
+    BA_test = list(typ.keys())
 
-    utt={}
-    for (idx,row) in df.iterrows():
-        utt[f"utt{idx}"]=dict(row)
-        
-    # print('UTT CORRESPONDANCE')
+    utt = {}
+    for (idx, row) in df.iterrows():
+        utt[f"utt{idx}"] = dict(row)
+
     # print(utt_correspondance)
-    
+
     ## Write target and non files 
-        
+
     with open("./trials_vox1.txt", "r") as file:
         lines = file.readlines()
-        
+
     with open("./target.txt", "w+") as target:
         with open("./non.txt", "w+") as non:
-        
+
             for line in lines:
                 first_utt = utt_correspondance[line.split()[1]]
                 second_utt = utt_correspondance[line.split()[2]]
-                
+
                 if line.split()[0] == '1':
-                    target.write("('"+first_utt+"', '"+second_utt+"')\n")
+                    target.write("('" + first_utt + "', '" + second_utt + "')\n")
                 elif line.split()[0] == '0':
-                    non.write("('"+first_utt+"', '"+second_utt+"')\n")
+                    non.write("('" + first_utt + "', '" + second_utt + "')\n")
                 else:
                     print("PROBLEM!")
-                    
-        
-    non,tar= load_trials()
-    #print("dout : ", dout)
-    LLR_target,LLR_non,list_eer,list_cllr_min,list_cllr_act,list_Din=LR_framework(dout,typ,utt,tar,non,[0.12])
-    #plt.show()
+
+    non, tar = load_trials()
+    # print("dout : ", dout)
+    LLR_target, LLR_non, list_eer, list_cllr_min, list_cllr_act, list_Din = LR_framework(dout, typ, utt, tar, non,
+                                                                                         [0.12])
+    # plt.show()
     # Assuming you have a specific couple
-    couple_to_print = ('utt131', 'utt123')
+    # couple_to_print = ('utt124', 'utt126')
+    couple_to_print = ('utt17', 'utt20')
+    couple_of_id = (
+        find_id_by_utt_in_utt_correspondance(couple_to_print[0]),
+        find_id_by_utt_in_utt_correspondance(couple_to_print[1]))
+    print("couple_of_id", couple_of_id)
+
+    print("BA " + couple_to_print[0], utt[couple_to_print[0]])
+    print("BA " + couple_to_print[1], np.array(utt[couple_to_print[1]].values()))
+
+    # couple_to_print_non = ('utt264', 'utt226')
 
     # Find the index of the couple in the 'tar' list
     couple_index = tar.index(couple_to_print)
+
+    # couple_index_non = non.index(couple_to_print_non)
 
     # Access the LLR scores for the specified couple in 'LLR_target'
     llr_target_for_couple = LLR_target[couple_index]
     llr_non_for_couple = LLR_non[couple_index]
 
+    print(predict(couple_to_print[0], couple_to_print[1]))
+
+    # llr_target_for_couple_non = LLR_target[couple_index_non]
+    # llr_non_for_couple_non = LLR_non[couple_index_non]
+
+    # define below function to generate the counterfactual method by minimizing the distance between the couple and the counterfactual
+    # it takes utt, couple, and random modifies the utterance of the couple to generate a counterfactual and pass it to LR framework
+
+    generate_counterfactual(utt, couple_to_print, dout, typ, tar, non)
+
     # Print the LLR scores
     print(f"LLR target for couple {couple_to_print}: {llr_target_for_couple}")
     print(f"LLR non for couple {couple_to_print}: {llr_non_for_couple}")
-    
