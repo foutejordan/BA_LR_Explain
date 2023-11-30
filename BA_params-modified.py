@@ -332,10 +332,7 @@ def predict(utt1, utt2):
     couple = (utt1, utt2)
     couple_index = tar.index(couple)
     llr_target_for_couple = LLR_target[couple_index]
-    llr_non_for_couple = LLR_non[couple_index]
-    # print("llr_target_for_couple", llr_target_for_couple)
-    # print("llr_non_for_couple", llr_non_for_couple)
-    if llr_target_for_couple > llr_non_for_couple:
+    if llr_target_for_couple > 180:
         return 1
     else:
         return 0
@@ -356,8 +353,8 @@ def do_edit(vector):
 
 def generate_counterfactual(utt, couple, dout, typ, tar, non):
     llr_target_for_couple = 100000
-    llr_non_for_couple = 0
-    while llr_target_for_couple > llr_non_for_couple:
+
+    while llr_target_for_couple > 180:
         vector1 = np.array(list(utt[couple[0]].values()))
         vector2 = np.array(list(utt[couple[1]].values()))
 
@@ -376,11 +373,8 @@ def generate_counterfactual(utt, couple, dout, typ, tar, non):
                                                                                              [0.12])
         couple_index = tar.index(couple)
         llr_target_for_couple = LLR_target[couple_index]
-        llr_non_for_couple = LLR_non[couple_index]
 
         print("llr_target_for_couple_counterfactual", llr_target_for_couple)
-        print("llr_non_for_couple_counterfactual", llr_non_for_couple)
-
         print("new predict", predict(couple[0], couple[1]))
 
 
@@ -478,7 +472,8 @@ if __name__ == "__main__":
 
     # Access the LLR scores for the specified couple in 'LLR_target'
     llr_target_for_couple = LLR_target[couple_index]
-    llr_non_for_couple = LLR_non[couple_index]
+
+    print(llr_target_for_couple)
 
     print(predict(couple_to_print[0], couple_to_print[1]))
 
@@ -492,4 +487,3 @@ if __name__ == "__main__":
 
     # Print the LLR scores
     print(f"LLR target for couple {couple_to_print}: {llr_target_for_couple}")
-    print(f"LLR non for couple {couple_to_print}: {llr_non_for_couple}")
