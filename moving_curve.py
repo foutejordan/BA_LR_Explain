@@ -34,9 +34,48 @@ from Step2.LR.performance import cllr, min_cllr
 from sklearn.metrics.pairwise import cosine_similarity
 import shap
 import pickle
+import copy
 
+from itertools import combinations
 
-utt_correspondance = {}
+def visualize_llr_framework(llr_framework):
+    LLR_target = llr_framework["LLR_target"]
+    LLR_non = llr_framework["LLR_non"]
+    list_eer = llr_framework["list_eer"]
+    list_cllr_min = llr_framework["list_cllr_min"]
+    list_cllr_act = llr_framework["list_cllr_act"]
+    list_Din = llr_framework["list_Din"]
+
+    # Plot LLR target and non-target scores
+    plt.figure(figsize=(12, 6))
+
+    plt.subplot(2, 3, 1)
+    plt.plot(LLR_target)
+    plt.title("LLR Target")
+
+    plt.subplot(2, 3, 2)
+    plt.plot(LLR_non)
+    plt.title("LLR Non-Target")
+
+    plt.subplot(2, 3, 3)
+    plt.plot(list_eer)
+    plt.title("EER")
+
+    plt.subplot(2, 3, 4)
+    plt.plot(list_cllr_min)
+    plt.title("Cllr Min")
+
+    plt.subplot(2, 3, 5)
+    plt.plot(list_cllr_act)
+    plt.title("Cllr Actual")
+
+    plt.subplot(2, 3, 6)
+    plt.plot(list_Din)
+    plt.title("D-in")
+
+    plt.tight_layout()
+    plt.show()
+
 
 def number_utterances(utt):
     '''
@@ -61,8 +100,8 @@ def number_utterances(utt):
         utt_correspondance[u] = "utt"+str(x)
         loc_list.append(first_element_after_split)
         
-    print("speaker_dict", speaker_dict)
-    print("loc_list", loc_list)
+    # print("speaker_dict", speaker_dict)
+    # print("loc_list", loc_list)
     return speaker_dict, loc_list
 
 
@@ -266,6 +305,8 @@ def stringToList(string):
 
 import re
 
+vectors_by_id = {}
+
 def readVectors_test(filePath):
     vectors = []
     utt = []
@@ -277,13 +318,14 @@ def readVectors_test(filePath):
 
         for ligne in lignes:
             if ligne:
-                print("ligne", ligne)
+                #print("ligne", ligne)
                 match = re.match(r'^(\S+)\s+\[([\d\s.]+)]$', ligne)
                 if match:
                     identifiant, elements_str = match.group(1), match.group(2)
                     elements = np.array([float(e) for e in elements_str.split()])
                     utt.append(identifiant)
                     vectors.append(elements)
+                    vectors_by_id[identifiant] = elements
 
                     # Afficher la progression
                     line_idx += 1
@@ -319,8 +361,88 @@ def readVectors(filePath):
                 last_printed_percent = percent
     return utt, np.array(vectors)
 
+def hamming_distance(vector1, vector2):
+    if len(vector1) != len(vector2):
+        raise ValueError("Vectors must be of the same length")
+
+    distance = 0
+    for bit1, bit2 in zip(vector1, vector2):
+        if bit1 != bit2:
+            distance += 1
+
+    return distance
+
+def generate_all_modifications(binary_vector, n):
+    """
+    Generate all binary vectors with exactly n bits flipped from the input binary vector.
+    """
+    length = len(binary_vector)
+    
+    # Generate all combinations of indices to flip
+    indices_to_flip_combinations = combinations(range(length), n)
+
+    # Initialize a list to store all modified vectors
+    modified_vectors = []
+
+    # Iterate through each combination of indices
+    for indices_to_flip in indices_to_flip_combinations:
+        # Create a copy of the original binary vector
+        modified_vector = binary_vector.copy()
+
+        # Flip the bits at the specified indices
+        for index in indices_to_flip:
+            modified_vector[index] = 1 - modified_vector[index]
+
+        # Append the modified vector to the list
+        modified_vectors.append(modified_vector)
+
+    return modified_vectors
+
+
+def modify_vector(modification_vector, vector_to_modify):
+    if len(modification_vector) != len(vector_to_modify):
+        print("ERROR!")
+    else:
+        modified_vector = copy.deepcopy(vector_to_modify)
+        for i in range(len(modification_vector)):
+            if modification_vector[i] == 1:
+                if modified_vector[i] == 0:
+                    modified_vector[i] = 1
+                else:
+                    modified_vector[i] = 0
+    return modified_vector
+
+
+def random_modification(vector, n, vector_size):
+    for i in range(1, n+1):
+        random = np.random.randint(vector_size)
+        if vector[i] == 0:
+            vector[i] = 1
+        else:
+            vector[i] = 0
+    return vector
+
+def find_keys_by_value(dictionary, target_value):
+    """
+    Find key(s) in the dictionary with the specified value.
+    """
+    keys_found = []
+    for key, value in dictionary.items():
+        if value == target_value:
+            keys_found.append(key)
+    return keys_found
 
 if __name__ == "__main__":
+    
+    best_llr_mean = 1000
+    VECTORS_SIZE = 206
+    last_round = False
+    zero_vector = [0] * VECTORS_SIZE
+    
+    utt_correspondance = {}
+    target_column_1 = []
+    non_utts = []
+    target_utts = []
     # Arguments
     # env.logging_config(env.PATH_LOGS + "/logFile")
     parse = argparse.ArgumentParser()
@@ -331,83 +453,153 @@ if __name__ == "__main__":
     logging.info("read xvectors")
     utterances, binary = readVectors_test(args.path)
     
-    #binary = randomlyModifyVectors()
+    #print(vectors_by_id)
     
     logging.info("finish reading xvectors")
     logging.info("xvectors array ready")
     utt_per_spk, loc_list = number_utterances(utterances)
     logging.info("delete zero columns...")
-
-    binary_vectors, idx = todelete1(binary)
-
-    logging.info(f"number of deleted columns: {len(idx)}")
-    BA = ['BA' + str(i) for i in range(binary.shape[1]) if np.array([i]) not in idx]
-    # liberate memory
-    # del binary
-    # del loc_list
-    # del idx
-    gc.collect()
-    logging.info("utterance_spk...")
-    utt_spk = utterance_spk(utt_per_spk)
-    logging.info("profil_spk...")
-    profil = profil_spk(binary_vectors, utt_per_spk, BA)
-    # speakers couples
-    logging.info("computing combinations...")
-    couples = list(itertools.combinations(utt_per_spk.keys(), 2))
-    #print(couples)
-    typicality_and_dropout(profil, couples, utt_spk, BA, binary_vectors, args.typ_path, args.dout_path)
-
-    #BA = ['BA' + str(i) for i in range(binary.shape[1])]
-    df = pd.DataFrame(binary_vectors, columns=BA)
-    df=todelete(df,BA)
-    df
-
-    typ,dout=load_filter_soft(args.typ_path, args.dout_path)
-    df=df[list(typ.keys())]
-    BA_test=list(typ.keys())
-
-    utt={}
-    for (idx,row) in df.iterrows():
-        utt[f"utt{idx}"]=dict(row)
-        
-    # print('UTT CORRESPONDANCE')
-    # print(utt_correspondance)
     
-    ## Write target and non files 
-        
+    # utt_id = "utt333"  # Replace with the actual utterance ID you are interested in
+
+    # if find_keys_by_value(utt_correspondance, utt_id)[0] in utterances:
+    #     binary_vector = vectors_by_id[find_keys_by_value(utt_correspondance, utt_id)[0]]
+    #     print(f"Binary vector for {find_keys_by_value(utt_correspondance, utt_id)[0]}: {binary_vector}")
+    # else:
+    #     print(f"Utterance {utt_id} not found in the dictionary.")
+    
+    
     with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/trials_vox1.txt", "r") as file:
-        lines = file.readlines()
-        
+                    lines = file.readlines()       
+                    
     with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/target.txt", "w+") as target:
         with open("/home/maax/Documents/Mega Sync/Cours M2/Explicabilité/BA_LR_Explained/non.txt", "w+") as non:
         
             for line in lines:
                 first_utt = utt_correspondance[line.split()[1]]
-                second_utt = utt_correspondance[line.split()[2]]
+                second_utt = utt_correspondance[line.split()[2]]                
                 
                 if line.split()[0] == '1':
                     target.write("('"+first_utt+"', '"+second_utt+"')\n")
+                    target_column_1.append(first_utt)
+                    target_utts.append(first_utt)
+                    target_utts.append(second_utt)
                 elif line.split()[0] == '0':
                     non.write("('"+first_utt+"', '"+second_utt+"')\n")
+                    non_utts.append(first_utt)
+                    non_utts.append(second_utt)
                 else:
                     print("PROBLEM!")
-                    
-        
+                
+    utt_spk = utterance_spk(utt_per_spk)
+    typ,dout=load_filter_soft(args.typ_path, args.dout_path)
+    
     non,tar= load_trials()
-    #print("dout : ", dout)
-    LLR_target,LLR_non,list_eer,list_cllr_min,list_cllr_act,list_Din=LR_framework(dout,typ,utt,tar,non,[0.12])
+                    
+    for modification_complexity in range(1, VECTORS_SIZE):
+                
+        if last_round == False : 
+            
+            modification_vectors = generate_all_modifications(zero_vector, modification_complexity)
+        
+            for i in range(len(modification_vectors)):
+                
+                iteration_vectors = []
+                
+                for utt in target_utts:
+                    vector = vectors_by_id[find_keys_by_value(utt_correspondance, utt)[0]]
+                    if utt in target_column_1:
+                        modified_vector = modify_vector(modification_vectors[i], vector)
+                        iteration_vectors.append(modified_vector)
+                    else:
+                        iteration_vectors.append(vector)
+                           
+                for utt in non_utts:
+                    vector = vectors_by_id[find_keys_by_value(utt_correspondance, utt)[0]]
+                    iteration_vectors.append(vector)
+                
+                iteration_vectors_array = np.array(iteration_vectors)
+
+                binary_vectors, idx = todelete1(iteration_vectors_array)
+
+                logging.info(f"number of deleted columns: {len(idx)}")
+                BA = ['BA' + str(i) for i in range(iteration_vectors_array.shape[1]) if np.array([i]) not in idx]
+            
+                # liberate memory
+                del iteration_vectors_array
+                del iteration_vectors
+                del idx
+                
+                gc.collect()
+                
+                profil = profil_spk(binary_vectors, utt_per_spk, BA)
+                # speakers couples
+                
+                couples = list(itertools.combinations(utt_per_spk.keys(), 2))
+                typicality_and_dropout(profil, couples, utt_spk, BA, binary_vectors, args.typ_path, args.dout_path)
+                
+                del couples
+
+                #BA = ['BA' + str(i) for i in range(binary.shape[1])]
+                df = pd.DataFrame(binary_vectors, columns=BA)
+                df=todelete(df,BA)
+                df
+                
+                df=df[list(typ.keys())]
+                BA_test=list(typ.keys())
+
+                utt={}
+                for (idx,row) in df.iterrows():
+                    utt[f"utt{idx}"]=dict(row)
+                
+                LLR_target,LLR_non,list_eer,list_cllr_min,list_cllr_act,list_Din=LR_framework(dout,typ,utt,tar,non,[0.12])
+                
+                if np.mean(LLR_target) < best_llr_mean:
+                    print(modification_complexity)
+                   
+                    best_llr_mean = np.mean(LLR_target)
+                    print(best_llr_mean)
+                     
+                    best_llr_framework = {
+                            "LLR_target": LLR_target,
+                            "LLR_non": LLR_non,
+                            "list_eer": list_eer,
+                            "list_cllr_min": list_cllr_min,
+                            "list_cllr_act": list_cllr_act,
+                            "list_Din": list_Din,
+                        }
+                    
+                    best_modification_vector = modification_vectors[i]
+                    best_llr_framework_figure_number = plt.gcf().number
+                    
+                    LLR_target_array = np.array(LLR_target)
+                    #if np.mean(LLR_target_array < 180) >= 0.75:
+                    if np.mean(LLR_target_array) < 0:
+                        last_round = True
+                        
+                    del LLR_target_array
+                del LLR_target,LLR_non,list_eer,list_cllr_min,list_cllr_act,list_Din
+                #del binary_vectors
+                del df
+                del utt
+
+                gc.collect()
+                    
+            del modification_vectors
+                        
+            gc.collect()   
+            
+            for num in plt.get_fignums():
+                if num != best_llr_framework_figure_number:
+                    plt.close(num)
+                    
+    print("Best modification vector : ", best_modification_vector)
+    print("Indexs des bits modifiés : ")
+    for index in range(len(best_modification_vector)):
+        bit = best_modification_vector[index]
+        if bit == 1:
+            print(index)
+    print("Best LLR_Mean : ", best_llr_mean)
     plt.show()
-    # Assuming you have a specific couple
-    couple_to_print = ('utt131', 'utt123')
-
-    # Find the index of the couple in the 'tar' list
-    couple_index = tar.index(couple_to_print)
-
-    # Access the LLR scores for the specified couple in 'LLR_target'
-    llr_target_for_couple = LLR_target[couple_index]
-    llr_non_for_couple = LLR_non[couple_index]
-
-    # Print the LLR scores
-    #print(f"LLR target for couple {couple_to_print}: {llr_target_for_couple}")
-    print(f"LLR non for couple {couple_to_print}: {llr_non_for_couple}")
+   
     
