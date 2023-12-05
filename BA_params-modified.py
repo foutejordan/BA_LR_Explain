@@ -395,6 +395,8 @@ if __name__ == "__main__":
     logging.info("delete zero columns...")
 
     binary_vectors, idx = todelete1(binary)
+    import csv
+
 
     logging.info(f"number of deleted columns: {len(idx)}")
     BA = ['BA' + str(i) for i in range(binary.shape[1]) if np.array([i]) not in idx]
