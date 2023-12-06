@@ -9,7 +9,7 @@ from bokeh.transform import factor_cmap
 
 
 
-def plot_family_bars(df_plot):
+def plot_family_bars(df_plot, ba):
     df_plot.Members = df_plot.Members.astype(str)
     df_plot.Family = df_plot.Family.astype(str)
     group = df_plot.groupby(['Family', 'Members'])
@@ -23,7 +23,7 @@ def plot_family_bars(df_plot):
     p.xaxis.axis_label = ""
     p.outline_line_color = None
     p.xaxis.major_label_orientation = "vertical"
-    output_file(f"data/BA/bar_cont_{ba}.html")
+    output_file(f"data/BA_expl/bar_cont_{ba}.html")
     show(p)
 def plot_bar_BA(df_cont_bas):
     df_cont_bas.BA = df_cont_bas.BA.astype(str)

@@ -342,7 +342,7 @@ import random
 
 
 def do_edit(vector):
-    indices_to_modify = random.sample(range(0, len(vector)), 3)
+    indices_to_modify = random.sample(range(0, len(vector)), 1)
     for i in indices_to_modify:
         if vector[i] == 0:
             vector[i] = 1
@@ -359,7 +359,7 @@ def generate_counterfactual(utt, couple, dout, typ, tar, non):
         vector2 = np.array(list(utt[couple[1]].values()))
 
         new_vector1 = do_edit(vector1)
-        new_vector2 = do_edit(vector2)
+        new_vector2 = (vector2)
 
         for key, value in utt.items():
             test = np.array(list(value.values()))
