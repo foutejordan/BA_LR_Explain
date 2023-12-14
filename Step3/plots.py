@@ -23,7 +23,7 @@ def plot_family_bars(df_plot, ba):
     p.xaxis.axis_label = ""
     p.outline_line_color = None
     p.xaxis.major_label_orientation = "vertical"
-    output_file(f"data/BA_expl/bar_cont_{ba}.html")
+    output_file(f"/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/BA_expl/bar_cont_{ba}.html")
     show(p)
 def plot_bar_BA(df_cont_bas):
     df_cont_bas.BA = df_cont_bas.BA.astype(str)
@@ -38,5 +38,5 @@ def plot_bar_BA(df_cont_bas):
     p.xaxis.axis_label = ""
     p.outline_line_color = None
     p.xaxis.major_label_orientation = "vertical"
-    output_file(f"data/BA/BAs_cont.html")
+    output_file(f"/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/BA/BAs_cont.html")
     show(p)

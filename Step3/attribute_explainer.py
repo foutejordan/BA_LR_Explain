@@ -23,8 +23,8 @@ def prepare_data(ba):
     # mloc_train = list(meta_vox2[meta_vox2["Set "] == "dev "]["Gender "].values).count("m ")
     # logging.info(f'Number of men in Train={mloc_train}')
     # logging.info(f'Number of female in Train={floc_train}')
-    ba0=pd.read_csv(f"data/BA/{ba}_0.csv")
-    ba1=pd.read_csv(f"data/BA/{ba}_1.csv")
+    ba0=pd.read_csv(f"/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/BA/{ba}_0.csv")
+    ba1=pd.read_csv(f"/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/BA/{ba}_1.csv")
     # ba0=ba0.drop(["Unnamed: 0"],axis=1)
     # ba1=ba1.drop(["Unnamed: 0"],axis=1)
     X=pd.concat([ba0,ba1],ignore_index=True)
@@ -36,10 +36,10 @@ def prepare_data(ba):
 #=================================================
 
 BA=[f"BA{i}" for i in range(256)]
-features_vox1=pd.read_csv("data/vox1_opensmile.csv")
-df_binary=pd.read_csv("data/df_binary.csv")
+features_vox1=pd.read_csv("/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/vox1_opensmile.csv")
+df_binary=pd.read_csv("/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/df_binary.csv")
 for ba in BA:
-    if os.path.isfile(f"data/BA/{ba}_0.csv"):
+    if os.path.isfile(f"/home/jordan/Documents/Avignon M2/interpretabilité & explicabiloté/Projet Mr Bonas/BA-LR/data/BA/{ba}_0.csv"):
         logging.info(f"===================={ba}=========================")
         X, y, ba0, ba1 = prepare_data(ba)
         parameters = {'max_depth': range(3, 15)}
@@ -51,7 +51,7 @@ for ba in BA:
         # test_acc=test_vox1(ba, tree_model, features_vox1, df_binary)
         logging.info("=======Building explainer=======")
         X=X.iloc[:,:-1]
-        explainer = shap.TreeExplainer(tree_model)
+        explainer = shap.KernelExplainer(tree_model.predict_proba, X)
         shap_values = explainer.shap_values(X)
         logging.info("=======End explainer=======")
         df_0=pd.DataFrame(shap_values[0],columns=X.columns)
