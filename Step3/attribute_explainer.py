@@ -51,7 +51,9 @@ for ba in BA:
         # test_acc=test_vox1(ba, tree_model, features_vox1, df_binary)
         logging.info("=======Building explainer=======")
         X=X.iloc[:,:-1]
-        explainer = shap.KernelExplainer(tree_model.predict_proba, X)
+        # explainer = shap.KernelExplainer(tree_model.predict_proba, X)
+        # shap_values = explainer.shap_values(X)
+        explainer = shap.TreeExplainer(tree_model)
         shap_values = explainer.shap_values(X)
         logging.info("=======End explainer=======")
         df_0=pd.DataFrame(shap_values[0],columns=X.columns)
